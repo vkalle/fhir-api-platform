@@ -37,6 +37,34 @@ Rules:
 - Reading another service's data goes through that service's API, or a Postgres view explicitly exposed for cross-schema reads — never a direct cross-schema table reference from application code.
 - Migrations live under `db/migrations/{schema}/`, one folder per service, run independently.
 
+**Tenant isolation: row-level, not schema/DB per tenant.** Every tenant-scoped table carries `tenant_id` (and `account_id` where relevant), indexed, enforced at the query/repository layer, with Postgres RLS as an optional backstop. No schema-per-tenant or DB-per-tenant — schema boundaries stay aligned to the 3 services only. Exception: a specific customer with a contractual/regulatory requirement for physical DB isolation is a one-off carve-out, not the default.
+
+**Cross-schema references are opaque, never FKs.** A service may store another service's ID (e.g. `app_registration_id`) as a plain value with no DB-level foreign key across schemas. To act on the referenced entity, call that service's API — never write across the schema boundary directly.
+
+## Composition — no dedicated BFF (for now)
+
+Angular calls the domain services (`Tenants.Api` / `SubTenants.Api` / `DataLink.Api`) directly through the future API gateway (routing/auth only, no aggregation). Cross-service composition for dashboard-style screens lives in a thin Angular-side facade/data-access service per persona, not a separate backend.
+
+Revisit only if: composition logic gets duplicated across multiple Angular consumers of the same shape, or a persona needs a genuinely distinct auth/session model that makes routing through shared domain APIs awkward.
+
+Note: **runtime service-to-service HTTP calls are fine and expected** (e.g. DataLink → SubTenants to validate an App Registration's scope) — this is different from the "no service project references another service project" rule, which is about compile-time code references only.
+
+## Review Queue / approval model
+
+DataLink is never in the approval path. Approval authority belongs to the Customer's own org admin over that Customer's Accounts. DataLink's role is pure oversight plus an independent circuit-breaker.
+
+- **Business approval — owned by `tenants`**: `tenants.production_reviews` stores `app_registration_id` as an opaque reference (no cross-schema FK). To act on it, `Tenants` calls `SubTenants`' API to flip the App Registration status. This is a Tenant-facing (Org persona) UI, not DataLink-facing.
+- **Operational circuit-breaker — owned by `datalink`, independent of approval**: two separate status flags, two owners — `subtenants.app_registrations.status` (business approval) and `datalink.app_gateway_status` (operational gate). At request time the gateway checks both. `datalink` also owns rate-limit policies/live enforcement state, with automatic (threshold breach) and manual (Incident Console) suspension.
+- **Notification on suspension is required**: when DataLink auto-suspends or an admin manually freezes an app, the Tenant's org admin must be notified — not silent. (Whether this justifies a `Common.Notifications` module is still open — see project doc open items.)
+
+## Module build sequencing
+
+Per module/persona, work through: approved screen HTMLs → DB schema (to ~90% confidence) → API contract (to ~90% confidence) → Angular build. Move to the next module only once the current one clears review.
+
+**Order: Account (SubTenants) → Org (Tenants) → Platform (DataLink).**
+
+SubTenants owns the deepest entity chain (Account → DB Binding → App Registration → API Scopes → Credentials/JWKS) and is the proven coupling point with both other schemas (Review Queue model above), so settling it first gives Tenants and DataLink a stable target to design against instead of guessing and later reopening a "settled" schema. DataLink goes last — it's the most reactive schema (gateway status, rate-limit enforcement), easiest to bolt on once it's clear exactly what it's gating.
+
 ## CQRS conventions
 
 - Commands and queries live in `{Service}.Application/Commands` and `/Queries`.
