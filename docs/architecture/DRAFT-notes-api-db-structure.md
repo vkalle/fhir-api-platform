@@ -85,3 +85,9 @@ Reasoning — minimizes having to reopen other modules' schemas later:
 - DataLink goes last because it's the most reactive schema (gateway status, rate-limit enforcement) — easiest to bolt on once it's clear exactly what it's gating.
 
 Sequence per module (repeats for Account, then Org, then Platform): approved screen HTMLs for that persona → DB schema for that module (90% confidence) → API contract for that module (90% confidence) → Angular build for that module's screens. Move to the next module only once the current one clears review.
+
+## 6. Tenant isolation model — DECIDED: row-level, not schema/DB per tenant
+
+Isolation between sub-tenants (Accounts) is row-level: `tenant_id`/`account_id` column on every tenant-scoped table, indexed, enforced at the query/repository layer, with Postgres RLS as an optional backstop. No schema-per-tenant or DB-per-tenant. Schema boundaries stay aligned to the 3 services only (`tenants`, `subtenants`, `datalink`) — not doubled up by tenant.
+
+Exception path (documented, not built): a specific customer contractually/regulatorily requires physical DB isolation — handled as a one-off carve-out later, same pattern as hierarchy search.
