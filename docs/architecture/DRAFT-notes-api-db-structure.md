@@ -40,9 +40,28 @@ Customer → Account (≤25) → DB Binding → App Registration → API Scopes
 | Customer, Org Team/SSO, Partner Tiering, Billing | `tenants` schema | high — top-level, org-wide, matches Tenants service |
 | Account, DB Binding, App Registration, API Scopes, Credentials/signing keys (JWKS) | `subtenants` schema | high — explicitly Account-scoped per planning doc |
 | Source System technical config (connection pool, health checks), Rate limit enforcement state | `datalink` schema | medium — operational/gateway concern, distinct from the tenant config that describes it |
-| Review Queue (approve/reject App Registration + scope changes) | **open — resolved below, revisit** | user asked to defer; leaning toward living with SubTenants (owns the App Registration data being approved) but exposed via DataLink-facing UI/API, same split-ownership pattern as Metering |
+| Review Queue (approve/reject App Registration + scope changes) | `tenants` schema — **see resolved model below**, not DataLink | resolved this session |
 | Metering/Usage rollups | shared, cross-service (similar shape to `audit` schema — one schema, tenant_id + product on every row) | medium |
 | Audit | `audit` schema (already designed) | high — settled earlier this session |
+
+### Review Queue / approval — RESOLVED
+
+Corrected business model (this session): **DL is never in the approval path.** Approval authority belongs to the Customer's own org admin, over that Customer's Accounts — not to DataLink. DataLink's role is pure oversight plus an independent circuit-breaker, not a gate in the normal flow.
+
+This splits into two genuinely separate concerns, owned by two different services, that must stay independent:
+
+**1. Business approval — owned by `tenants`**
+- `tenants.production_reviews` (or similar): the org admin's approve/reject/request-changes workflow over an Account's App Registration production request. Stores `app_registration_id` as an opaque reference (no DB-level FK across schemas — that would violate the "no cross-schema writes/refs" rule). To act on it, `Tenants` service calls `SubTenants`' API (service-to-service, not a direct write) to flip the actual App Registration status.
+- The originally-planned "DL-facing Review Queue" screen (`D2`) is wrong per this correction — that approval UI belongs in the **Org** persona (Tenant-facing), not Platform (DataLink-facing). `app.routes.ts` currently has `org/approvals` (U3, "App approvals & allow-list") — that's actually the right home; the planning doc's `D2` "Approvals across orgs" needs re-scoping to DL's *view* of approvals (read-only) or dropped in favor of DL's own concerns below.
+
+**2. Operational circuit-breaker — owned by `datalink`, independent of approval status**
+- DL can suspend a *technically approved* app's ability to call the FHIR gateway, orthogonal to whether the Tenant approved it. Two independent flags, two owners:
+  - `subtenants.app_registrations.status` — business approval (Tenant-controlled)
+  - `datalink.app_gateway_status` — operational gate (DataLink-controlled: active/suspended)
+- At request time, the gateway checks **both** — approved AND not suspended — before allowing a call through.
+- **Automatic + manual** (per this session): `datalink` owns rate-limit policies/tiers and live enforcement state (the Redis-based live counters from the planning doc), plus an auto-suspension rule (threshold breach → auto-flip `app_gateway_status` to suspended) and a manual override via Incident Console (`freeze`, `force-revoke`, `force JWKS refetch` — already in the screens).
+- **Dedicated DL observability** (per this session, not just shared audit/metering): DataLink's own schema already needs the rate-limit/gateway-status tables above to drive auto-suspension — this mostly *is* the dedicated observability the session called for, rather than a separate new concept. Worth confirming at schema-drafting time whether anything more is needed beyond gateway-status + rate-limit-event tables.
+
 
 Next step once Review Queue ownership is settled: draft actual table definitions (columns, FKs, indexes) per schema, matching the entity table from the planning doc (Customer/Account/DB Binding/App Registration/API Scope table with cardinality + key attributes).
 
