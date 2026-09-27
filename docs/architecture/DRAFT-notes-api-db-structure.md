@@ -69,3 +69,19 @@ Next step once Review Queue ownership is settled: draft actual table definitions
 ## 4. API granularity / mapping APIs to Angular routes
 
 Not yet drafted. Plan: once schema ownership is settled, map each of the 34 screens (route codes S1-S15, U1-U8, D1-D11 from `app.routes.ts`) to the domain service(s) and specific endpoints it calls — this becomes the concrete "boundary" reference so a new screen's data needs make it obvious which service it talks to, and flags any screen that genuinely needs composition (→ candidate for revisiting BFF).
+
+## 5. Module sequencing — which persona/module goes first
+
+**Decision: Account (SubTenants) first, then Org (Tenants), then Platform (DataLink) last.**
+
+Reasoning — surfaces the most DB-design friction earliest:
+- SubTenants owns the deepest entity chain in the whole platform: Account → DB Binding → App Registration → API Scopes → Credentials/JWKS. Tenants is comparatively flat (org, team, billing); DataLink is mostly operational/state tables.
+- It's already the proven coupling point. The Review Queue resolution this session showed `subtenants.app_registrations.status` has to interoperate with `tenants.production_reviews` (opaque ref, no FK) *and* `datalink.app_gateway_status` (independent flag, gateway checks both). Any modeling mistake here propagates into both other schemas' contracts.
+- Credentials/JWKS and API Scopes are the entities most likely to hide decisions (rotation history, revocation, scope versioning) that are cheap to get right now and expensive to retrofit once other services depend on the shape.
+
+Reasoning — minimizes having to reopen other modules' schemas later:
+- Tenants and DataLink largely *reference* what SubTenants defines (opaque `app_registration_id`, `app_gateway_status` keyed off the same ID). Settling SubTenants first gives Tenants/DataLink a stable target to design against.
+- The reverse order is riskier: designing Tenants or DataLink first tends to under-specify the App Registration/Credentials shape (it isn't their primary entity), forcing a rewrite once SubTenants' real requirements surface.
+- DataLink goes last because it's the most reactive schema (gateway status, rate-limit enforcement) — easiest to bolt on once it's clear exactly what it's gating.
+
+Sequence per module (repeats for Account, then Org, then Platform): approved screen HTMLs for that persona → DB schema for that module (90% confidence) → API contract for that module (90% confidence) → Angular build for that module's screens. Move to the next module only once the current one clears review.
