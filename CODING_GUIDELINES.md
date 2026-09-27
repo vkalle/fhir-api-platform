@@ -61,30 +61,105 @@ Holding area for security-related code/patterns that are still being figured out
 
 ## Audit (HIPAA)
 
-Audit is mandatory across all tables in all services. Writes and reads are audited by different mechanisms — they are not interchangeable:
+Audit is a condition of entry, not a feature — designed in from the first line of code, not retrofitted. Adopted from the proven Datalink/Nova audit framework, scoped to what this project needs now; the infra layers below are a documented later phase, not deferred indefinitely.
 
-**Writes (INSERT/UPDATE/DELETE) — trigger-based, source of truth**
-- Every table in `tenants`, `subtenants`, `datalink` schemas gets a generic audit trigger writing to `audit.change_log` (old row, new row, operation, table, timestamp as JSONB).
-- Trigger-based because it's attached at DDL time — a new table without its trigger is a visible gap, not a silently-missed app-code path. This is what makes "all tables" actually enforceable.
-- Every transaction sets session context before writing: `SET LOCAL app.user_id`, `app.tenant_id`, `app.correlation_id`. The trigger reads these into the audit row. Without this, triggers alone are context-blind (see architecture note below).
-- CI check: a query against `pg_trigger` confirms every table in the three schemas has the audit trigger attached. New tables without it fail the build.
+### The six questions every audit record must answer
 
-**Reads (SELECT / PHI views) — application-level only**
-- Triggers cannot fire on `SELECT` — this half cannot be done at the DB layer, full stop.
-- Implemented as an `AuditBehavior` in the CQRS query pipeline (`Common.Cqrs`), logging who viewed which record(s) and when, into `audit.access_log`.
-- Every query handler that returns PHI goes through this behavior — not optional per-handler.
+A record that cannot answer all six is incomplete for compliance purposes, regardless of what else it contains.
 
-**Storage**
-- Same Postgres instance, dedicated `audit` schema (`audit.change_log`, `audit.access_log`).
-- Append-only: `UPDATE` and `DELETE` grants on `audit.*` tables are revoked at the role level for all application roles. Enforced by role permissions, not convention.
-- Migrations for the audit schema live in `db/migrations/audit/`, versioned separately since it's shared infrastructure, not owned by one service.
+| Question | What it captures |
+|---|---|
+| WHO | Authenticated user — identity and role *at time of access*, not the role they hold today |
+| WHAT | Action and resource — exactly which record |
+| WHEN | UTC timestamp, ordered, unambiguous |
+| WHERE | Correlation/request ID linking this event to the full request chain |
+| WHY | Business context — reason code for sensitive-category access |
+| SCOPE | Product and tenant — which service, which customer |
 
-**Where the code lives**
-- `Common.Audit` — the pipeline behavior, session-context setter, and shared audit DTOs. Used by every service; owned in Common because audit is cross-cutting by definition, not duplicated logic waiting to be promoted.
-- The Postgres trigger function itself lives in `db/migrations/audit/` as SQL, applied to each service schema's tables — not app code, since it must survive even if the app layer is bypassed.
+### Phase 0 (now) — DB triggers + application interceptor
 
-## Naming
+**Writes (INSERT/UPDATE/DELETE) — trigger-based, the completeness guarantee.**
+- One generic trigger function applied to every table in `tenants`, `subtenants`, `datalink` schemas. Fires inside the same transaction as the write — if the write commits, the audit record commits.
+- Trigger-based because it's attached at DDL time: a new table missing it is a visible gap (caught by CI against `pg_trigger`), not a silently-skipped app-code path.
+- A trigger only knows the DB role and row values — not who, why, or which feature. Context arrives via PostgreSQL session variables the application sets before every operation:
 
-- Projects: `{Service}.{Layer}` (e.g. `Tenants.Application`).
-- Only `.Api` projects are deployment targets — CI/CD triggers per-folder, not per-repo.
-- Schemas: lowercase, matches service folder name exactly.
+| Variable | Set by | Contains |
+|---|---|---|
+| `app.user_id` | Audit middleware | Authenticated user identity |
+| `app.tenant_id` | Audit middleware | Customer tenant |
+| `app.request_id` | Audit middleware | Correlation ID |
+| `app.product` | Audit middleware | `TN` \| `ST` \| `DL` |
+| `app.feature` | Feature entry point (controller/handler) | `tenant_onboard`, `subtenant_create`, etc. — not automatic, must be set explicitly |
+| `app.reason` | Audit middleware, from `X-Audit-Reason` header | Reason code, sensitive access only |
+| `app.source` | Middleware / worker | `application` \| `batch` \| `migration` — gates session-variable-gated triggers on pipeline-fed tables |
+
+**Application interceptor — scoped narrowly, not blanket instrumentation.**
+- Standard CUD needs *no* audit code in domain handlers — the trigger + session variables cover it completely.
+- The interceptor (EF Core `SaveChangesInterceptor`, in `Common.Audit`) is used only where application-level context is the *only* source: sensitive-category classification (response content must be inspected) and reason-code capture (human intent, stated at access time, cannot be reconstructed after the fact).
+- Atomicity is non-negotiable: audit write and clinical write are the same transaction. If the audit insert fails, the whole transaction rolls back — a change that cannot be audited must not be committed. Never catch-and-continue on an audit failure.
+
+**Reads (SELECT) — application-level only, no exception.**
+- Triggers cannot fire on `SELECT`, full stop. Implemented as an `AuditBehavior` in the CQRS query pipeline (`Common.Cqrs`) for any query returning PHI.
+
+**Sensitive categories — elevated treatment.**
+- Categories requiring a stated reason before access is granted (not optional, enforced at the API): PHI subject to elevated regulatory treatment where applicable (e.g. mental health, substance use, HIV status, genetic information) — maintained in an ops-updatable `audit.sensitive_registry` table, not hardcoded.
+- The audit event records the *category*, never the raw clinical value — the clinical DB stays the single authoritative source for actual values; the audit record must stay safe to route to broader-access consumers later (log pipelines, alerting) without becoming a second PHI store.
+
+**Background workers (Kafka consumers, scheduled jobs) — context propagation, not exemption.**
+- Workers run outside the HTTP pipeline, so middleware never sets session variables — a worker touching a PHI table produces a *complete-looking but anonymous* audit record unless context is explicitly propagated with the message (not the thread): capture context at publish time, carry it in message headers, extract and `SET LOCAL` it before the domain handler runs, scoped to that message's transaction only.
+- No active context at publish time (a daemon with no originating user) → fall back to an explicit system identity, never a silent null.
+
+**Storage (now).**
+- Dedicated `audit` schema, partitioned by `changed_at` (monthly) from day one — retrofitting partitioning in production later is expensive. Sub-partitioning by product/service only if query volume justifies it.
+- `audit.activity` — all CUD, shared across services, columns: `audit_id, tenant_id, product, table_name, record_pk, operation, changed_at, user_id, request_id, feature, reason, old_data, new_data, changed_cols`.
+- `audit.sensitive` — sensitive-category events, separate table (not a filtered view), stricter access.
+- Append-only: `UPDATE`/`DELETE` grants on `audit.*` revoked at the role level, not convention.
+- Migrations under `db/migrations/audit/`, versioned separately as shared infrastructure.
+
+**Where the code lives.**
+- `Common.Audit` — interceptor, session-context middleware/accessor, shared audit DTOs (the six-field contract floor every service's audit record extends). Lives in Common by default (not promotion-gated like other shared code) because audit logic inside a domain service drifts under feature pressure — this is deliberate, not an exception to the "promote after 2x duplication" rule.
+- The trigger function itself is SQL in `db/migrations/audit/`, not app code — it must survive even if the application layer is bypassed entirely.
+
+### Phase 1+ (later, documented not built) — perimeter and backstop layers
+
+Not implemented yet; noted here so the schema/session-variable contract above doesn't need to change when these arrive:
+- **API gateway perimeter logging** (if/when a gateway like APISIX sits in front) — endpoint, user, status, timestamp for every call, zero application code.
+- **pgaudit** as the DBA/privileged-access backstop — DDL, schema migrations, role changes, direct DB access bypassing the app. Scoped narrowly (DDL + privileged roles), not general CUD — triggers already own that.
+- **Kafka topics + a log/trace backend** (e.g. SigNoz) for operational investigation, separate from the PostgreSQL `audit.*` tables which remain the system of record for change history and compliance packet assembly.
+
+## Naming conventions
+
+Golden rule: a name derives from the folder/service it belongs to. Know the folder, know every other name — no independent naming decisions per layer.
+
+**Service short codes** (audit trail, Kafka topics, HTTP headers only — never in permission keys or folder names):
+
+| Service | Short code |
+|---|---|
+| Tenants | `TN` |
+| SubTenants | `ST` |
+| DataLink | `DL` |
+
+**Case conventions:**
+
+| What | Convention | Example |
+|---|---|---|
+| Folders | kebab-case | `src/services/tenants/` (display name `Tenants` in .sln) |
+| .NET projects/classes | PascalCase | `Tenants.Application`, `AuditInterceptor` |
+| .NET interfaces | IPascalCase | `IAuditService` |
+| .NET constants | PascalCase.Property | `AuditTopics.Tenants` |
+| DB schema/table/column | snake_case, lowercase | `audit.activity`, `changed_at` |
+| DB roles | `fhir_snake_case` | `fhir_app`, `fhir_dba`, `fhir_readonly`, `fhir_audit_reader` |
+| Session variables | `app.snake_case` | `app.user_id`, `app.tenant_id` |
+| HTTP headers | X-Pascal-Case | `X-Request-Id`, `X-Audit-Reason` |
+| Kafka topics (phase 1+) | dot.separated.hierarchical, env-prefixed | `prod.audit.app.tn` |
+| Permission keys | `Prefix.Module.Action` | `TN.Tenants.Edit`, `ST.SubTenants.Create` — full prefix word or short code consistently, agreed once, never mixed |
+
+Anti-pattern: a name that doesn't derive from its folder, or mixes conventions (e.g. `cm.care-plans.edit`, `SA.Config.Edit`) — raise it before introducing a name outside these rules; a new inconsistent name is a future integration seam failure, not a style nitpick.
+
+## Hierarchy search (documented pattern, not built yet)
+
+Tenants → SubTenants is a hierarchy. At small scale, straightforward parent-ID lookups are fine — no need to build the pattern below now. Documented so the future move isn't a redesign:
+
+- Store a precomputed **PathString** per node (e.g. `/1/1/2/`) alongside the relational parent reference. Descendant lookups become string-prefix matches (`WHERE path_string LIKE '/1/1/%'`) instead of recursive traversal — this is what makes it scale past tens of thousands of nodes.
+- If/when search volume or hierarchy depth justifies it, bulk-index nodes (with precomputed path + type path) into a search layer (e.g. OpenSearch) for sub-second prefix/full-text search, hierarchy-scoped by path prefix for access control.
+- Trigger to revisit: query times degrading as node count grows, or a search requirement (filter/full-text across tenant hierarchy) that a simple SQL `LIKE` can't serve well. At that point this becomes a `Common.Search` candidate per the promotion rule above — not before.
