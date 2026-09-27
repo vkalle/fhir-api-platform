@@ -1,5 +1,11 @@
 # Coding Guidelines — FHIR API Platform
 
+## Versions
+
+- Angular 22
+- PostgreSQL 18
+- .NET (latest LTS at time of build)
+
 ## Architecture
 
 Monorepo, multiple independently deployable services, shared Postgres database.
@@ -52,6 +58,30 @@ Example: FHIR search-parameter logic. If `Tenants` and `SubTenants` both impleme
 ## Security.Incubator
 
 Holding area for security-related code/patterns that are still being figured out — tenant isolation edge cases, API key rotation, external OAuth flows under review. Explicitly **not** production-hardened by default. Anything here needs a deliberate promotion (with review) before a service depends on it. Add a short note at the top of each pattern's file on what's unresolved.
+
+## Audit (HIPAA)
+
+Audit is mandatory across all tables in all services. Writes and reads are audited by different mechanisms — they are not interchangeable:
+
+**Writes (INSERT/UPDATE/DELETE) — trigger-based, source of truth**
+- Every table in `tenants`, `subtenants`, `datalink` schemas gets a generic audit trigger writing to `audit.change_log` (old row, new row, operation, table, timestamp as JSONB).
+- Trigger-based because it's attached at DDL time — a new table without its trigger is a visible gap, not a silently-missed app-code path. This is what makes "all tables" actually enforceable.
+- Every transaction sets session context before writing: `SET LOCAL app.user_id`, `app.tenant_id`, `app.correlation_id`. The trigger reads these into the audit row. Without this, triggers alone are context-blind (see architecture note below).
+- CI check: a query against `pg_trigger` confirms every table in the three schemas has the audit trigger attached. New tables without it fail the build.
+
+**Reads (SELECT / PHI views) — application-level only**
+- Triggers cannot fire on `SELECT` — this half cannot be done at the DB layer, full stop.
+- Implemented as an `AuditBehavior` in the CQRS query pipeline (`Common.Cqrs`), logging who viewed which record(s) and when, into `audit.access_log`.
+- Every query handler that returns PHI goes through this behavior — not optional per-handler.
+
+**Storage**
+- Same Postgres instance, dedicated `audit` schema (`audit.change_log`, `audit.access_log`).
+- Append-only: `UPDATE` and `DELETE` grants on `audit.*` tables are revoked at the role level for all application roles. Enforced by role permissions, not convention.
+- Migrations for the audit schema live in `db/migrations/audit/`, versioned separately since it's shared infrastructure, not owned by one service.
+
+**Where the code lives**
+- `Common.Audit` — the pipeline behavior, session-context setter, and shared audit DTOs. Used by every service; owned in Common because audit is cross-cutting by definition, not duplicated logic waiting to be promoted.
+- The Postgres trigger function itself lives in `db/migrations/audit/` as SQL, applied to each service schema's tables — not app code, since it must survive even if the app layer is bypassed.
 
 ## Naming
 
