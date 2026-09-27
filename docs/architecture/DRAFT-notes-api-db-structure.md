@@ -12,7 +12,7 @@ Status: **discussion notes, not yet in CODING_GUIDELINES.md.** Review at end of 
 
 `src/Web/src/app/features/{persona}/{screen}/` per-screen component + scss is the right growth pattern as the 31 placeholder screens get built out. No change needed yet — revisit once more screens exist and we see real duplication (same rule as `Common` promotion: don't restructure preemptively).
 
-## 2. BFF vs no BFF — leaning: no dedicated BFF service, for now
+## 2. BFF vs no BFF — DECIDED: no dedicated BFF service, for now
 
 Two distinct things were being conflated under "API calling APIs":
 
