@@ -1,0 +1,8 @@
+<a class="shell__skip" href="#main">Skip to content</a>
+<app-topbar [persona]="persona()" />
+<div class="shell__body">
+  <app-sidebar [persona]="persona()" [sections]="nav()" />
+  <main id="main" class="shell__main" tabindex="-1">
+    <router-outlet />
+  </main>
+</div>

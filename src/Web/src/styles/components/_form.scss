@@ -1,0 +1,80 @@
+@use 'tokens' as t;
+@use 'mixins' as m;
+
+.dl-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &__label {
+    @include m.type('secondary-strong');
+  }
+
+  &__help {
+    @include m.type('secondary');
+
+    color: t.$fg-2;
+  }
+}
+
+.dl-input {
+  @include m.transition(background-color, border-color, box-shadow);
+
+  width: 100%;
+  height: t.$control-height;
+  padding: 0 t.$space-3;
+  border: 1px solid t.$border-rest;
+  border-radius: t.$radius-sm;
+  background: t.$bg-rest;
+  font-size: t.$font-size-sm;
+  font-weight: t.$weight-medium;
+
+  &:focus {
+    outline: none;
+    background: t.$bg-active;
+    border-color: t.$border-active;
+    box-shadow: t.$focus-ring;
+  }
+
+  &--mono {
+    @include m.mono;
+  }
+}
+
+// Segmented control and pill tabs share one pattern.
+.dl-segmented {
+  display: inline-flex;
+  gap: t.$space-1;
+  padding: t.$space-1;
+  border: 1px solid t.$border-subtle;
+  border-radius: t.$radius-lg;
+  background: t.$bg-surface;
+
+  &__item {
+    @include m.focus-visible;
+    @include m.transition(background-color, color);
+
+    display: inline-flex;
+    align-items: center;
+    gap: t.$space-2;
+    padding: 6px 14px;
+    border: 0;
+    border-radius: t.$radius-md;
+    background: transparent;
+    color: t.$fg-2;
+    font-size: t.$font-size-sm;
+    font-weight: t.$weight-medium;
+    cursor: pointer;
+
+    &--active {
+      background: t.$brand-primary;
+      color: t.$fg-on-brand;
+      font-weight: t.$weight-bold;
+    }
+  }
+
+  &--tabs &__item {
+    padding: t.$space-2 t.$space-4;
+    font-size: t.$font-size-md;
+  }
+}

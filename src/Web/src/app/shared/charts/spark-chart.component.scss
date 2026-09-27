@@ -1,0 +1,56 @@
+@use 'tokens' as t;
+
+.spark {
+  margin: 0;
+
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin-top: t.$space-1;
+    overflow: visible;
+  }
+
+  &__head {
+    display: flex;
+    align-items: baseline;
+    gap: t.$space-2;
+  }
+
+  &__value {
+    font-size: t.$font-size-lg;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__axis {
+    stroke: t.$border-subtle;
+  }
+
+  &__ref {
+    stroke: t.$fg-2;
+    stroke-width: 1.5;
+    stroke-dasharray: 4 3;
+  }
+
+  &__area {
+    fill: t.$chart-area;
+  }
+
+  &__line {
+    fill: none;
+    stroke: t.$chart-1;
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+
+  &__dot {
+    fill: t.$chart-1;
+    stroke: t.$bg-surface;
+    stroke-width: 2;
+  }
+
+  &__label {
+    fill: t.$fg-2;
+    font-size: t.$font-size-sm;
+  }
+}

@@ -1,0 +1,115 @@
+@use 'tokens' as t;
+@use 'mixins' as m;
+
+:host {
+  flex-shrink: 0;
+  width: t.$sidebar-width;
+  border-right: 1px solid t.$border-subtle;
+  background: t.$bg-surface;
+
+  @media (width <= 900px) {
+    width: 100%;
+    border-right: 0;
+    border-bottom: 1px solid t.$border-subtle;
+  }
+}
+
+.sidebar {
+  position: sticky;
+  top: t.$topbar-height;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-1;
+  padding: t.$space-5 t.$space-3;
+
+  @media (width <= 900px) {
+    position: static;
+    flex-direction: row;
+    padding: t.$space-2 t.$space-4;
+    overflow-x: auto;
+  }
+
+  &__owner {
+    display: flex;
+    align-items: center;
+    gap: t.$space-3;
+    margin-bottom: t.$space-3;
+    padding: t.$space-3;
+    border: 1px solid t.$border-subtle;
+    border-radius: t.$radius-md;
+
+    @media (width <= 900px) {
+      display: none;
+    }
+  }
+
+  &__owner-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+
+    span {
+      font-size: t.$font-size-sm;
+      color: t.$fg-2;
+    }
+  }
+
+  &__badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: t.$radius-md;
+    background: t.$info-bg;
+    color: t.$brand-primary;
+    font-weight: t.$weight-bold;
+
+    &[data-persona='org'] {
+      background: t.$purple-bg;
+      color: t.$purple-fg;
+    }
+
+    &[data-persona='platform'] {
+      background: t.$brand-gradient;
+      color: t.$fg-on-brand;
+    }
+  }
+
+  &__heading {
+    padding: t.$space-4 t.$space-3 t.$space-1;
+    font-size: t.$font-size-sm;
+    font-weight: t.$weight-semibold;
+    color: t.$fg-2;
+
+    @media (width <= 900px) {
+      display: none;
+    }
+  }
+
+  &__link {
+    @include m.transition(background-color, color);
+
+    display: flex;
+    align-items: center;
+    gap: t.$space-3;
+    min-height: t.$touch-target;
+    padding: 0 t.$space-3;
+    border-radius: t.$radius-md;
+    color: t.$fg-2;
+    font-weight: t.$weight-medium;
+    white-space: nowrap;
+
+    &:hover {
+      background: t.$bg-page;
+      color: t.$fg-1;
+    }
+
+    &--active,
+    &--active:hover {
+      background: t.$brand-primary;
+      color: t.$fg-on-brand;
+      font-weight: t.$weight-bold;
+    }
+  }
+}

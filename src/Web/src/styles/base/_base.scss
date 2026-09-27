@@ -1,0 +1,93 @@
+@use 'tokens' as t;
+@use 'mixins' as m;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: t.$font-sans;
+  font-size: t.$font-size-md;
+  color: t.$fg-1;
+  background: t.$bg-page;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h1 {
+  @include m.type('page-title');
+
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+h2 {
+  @include m.type('title');
+
+  text-wrap: balance;
+}
+
+a {
+  color: t.$fg-link;
+  text-decoration: none;
+
+  &:hover {
+    color: t.$brand-primary-hover;
+  }
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid t.$brand-gradient-start;
+  outline-offset: 2px;
+}
+
+.u-meta {
+  @include m.type('secondary');
+
+  color: t.$fg-2;
+}
+
+.u-mono {
+  @include m.mono;
+}
+
+.u-num {
+  @include m.tabular;
+
+  text-align: right;
+}
+
+.u-sr-only {
+  @include m.visually-hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

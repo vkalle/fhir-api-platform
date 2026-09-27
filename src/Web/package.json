@@ -1,0 +1,60 @@
+{
+  "name": "nova-portal",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "test:ci": "ng test --watch=false --browsers=ChromeHeadless",
+    "lint": "npm run lint:ts && npm run lint:scss && npm run format:check",
+    "lint:ts": "ng lint",
+    "lint:scss": "stylelint \"src/**/*.scss\"",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "a11y": "http-server dist/nova-portal/browser -p 4300 -P http://localhost:4300? --silent & sleep 2 && npx --yes pa11y-ci@3 --config .pa11yci.json",
+    "prepare": "husky"
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/common": "^19.2.0",
+    "@angular/compiler": "^19.2.0",
+    "@angular/core": "^19.2.0",
+    "@angular/forms": "^19.2.0",
+    "@angular/platform-browser": "^19.2.0",
+    "@angular/platform-browser-dynamic": "^19.2.0",
+    "@angular/router": "^19.2.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^19.2.27",
+    "@angular/cli": "^19.2.27",
+    "@angular/compiler-cli": "^19.2.0",
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@types/jasmine": "~5.1.0",
+    "angular-eslint": "19.8.1",
+    "eslint": "^9.28.0",
+    "http-server": "^14.1.1",
+    "husky": "^9.1.7",
+    "jasmine-core": "~5.6.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "lint-staged": "^15.5.2",
+    "prettier": "^3.9.9",
+    "stylelint": "^16.26.1",
+    "stylelint-config-standard-scss": "^14.0.0",
+    "stylelint-declaration-strict-value": "^1.12.1",
+    "typescript": "~5.7.2",
+    "typescript-eslint": "8.33.1"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}

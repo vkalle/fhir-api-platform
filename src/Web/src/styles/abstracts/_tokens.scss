@@ -1,0 +1,154 @@
+// Datalink design system tokens.
+// Source of truth: Datalink design system (project/tokens.json).
+// This is the ONLY file allowed to contain raw colour, shadow and font values.
+// Stylelint enforces that every other file uses these variables.
+
+// ---------------------------------------------------------------- Colour
+$brand-primary: #0054a0;
+$brand-primary-hover: #004485;
+$brand-primary-press: #003972;
+$brand-gradient-start: #41bfbf;
+$brand-gradient-end: #345e9e;
+$brand-gradient: linear-gradient(135deg, $brand-gradient-start, $brand-gradient-end);
+
+$fg-1: #0a1d3a;
+$fg-2: #425c83;
+$fg-on-brand: #fff;
+$fg-link: $brand-primary;
+
+$bg-page: #f6f8ff;
+$bg-surface: #fff;
+$bg-subtle: #fafbff;
+$bg-rest: #f3f3f3;
+$bg-active: #fff;
+
+$border-rest: #cecece;
+$border-active: #cad8ec;
+$border-subtle: #e6ecf5;
+
+$info-fg: $fg-link;
+$info-bg: #e2e8ff;
+$success-fg: #00a63e;
+$success-fg-strong: #00753a;
+$success-bg: #e0fff2;
+$error-fg: #f90606;
+$error-fg-strong: #c40000;
+$error-bg: #ffe3e3;
+$warning-fg: #f97316;
+$warning-fg-strong: #b45309;
+$warning-bg: #ffeadb;
+$purple-fg: #6f42c1;
+$purple-bg: #ebdfff;
+$brown-fg: #8f0606;
+$brown-bg: #fcdddd;
+
+// Categorical chart palette (validated for colour-vision deficiency, light surface).
+$chart-1: $brand-primary;
+$chart-2: #0a9a9a;
+$chart-3: #8a5cd6;
+$chart-area: rgb(0 84 160 / 10%);
+$scrim: rgb(10 29 58 / 35%);
+
+// ---------------------------------------------------------------- Type
+$font-sans:
+  'Poppins',
+  system-ui,
+  -apple-system,
+  'Segoe UI',
+  roboto,
+  sans-serif;
+$font-mono: ui-monospace, sfmono-regular, menlo, monospace;
+
+$type: (
+  'page-title': (
+    22px,
+    700,
+    1.2,
+  ),
+  'card-title': (
+    20px,
+    700,
+    1.2,
+  ),
+  'title': (
+    18px,
+    700,
+    1.2,
+  ),
+  'card-subtitle': (
+    16px,
+    500,
+    1.35,
+  ),
+  'primary-strong': (
+    16px,
+    600,
+    1.5,
+  ),
+  'primary': (
+    16px,
+    400,
+    1.5,
+  ),
+  'secondary-strong': (
+    14px,
+    600,
+    1.5,
+  ),
+  'secondary': (
+    14px,
+    400,
+    1.5,
+  ),
+);
+
+$font-size-sm: 14px;
+$font-size-md: 16px;
+$font-size-lg: 18px;
+$font-size-xl: 22px;
+$font-size-hero: 32px;
+$weight-regular: 400;
+$weight-medium: 500;
+$weight-semibold: 600;
+$weight-bold: 700;
+
+// ---------------------------------------------------------------- Space (4px scale)
+$space-1: 4px;
+$space-2: 8px;
+$space-3: 12px;
+$space-4: 16px;
+$space-5: 20px;
+$space-6: 24px;
+$space-8: 32px;
+$space-10: 40px;
+$space-12: 48px;
+$space-16: 64px;
+
+// ---------------------------------------------------------------- Radius
+$radius-xs: 4px;
+$radius-sm: 6px;
+$radius-md: 8px;
+$radius-lg: 12px;
+$radius-xl: 16px;
+$radius-pill: 999px;
+
+// ---------------------------------------------------------------- Elevation
+$shadow-sm: 0 1px 2px rgb(10 29 58 / 6%);
+$shadow-md: 0 2px 8px rgb(10 29 58 / 8%);
+$shadow-lg: 0 8px 24px rgb(10 29 58 / 10%);
+$shadow-popup: 0 12px 32px rgb(10 29 58 / 14%);
+$focus-ring: 0 0 0 3px rgb(0 84 160 / 20%);
+
+// ---------------------------------------------------------------- Motion
+$ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+$duration-fast: 120ms;
+$duration-base: 200ms;
+
+// ---------------------------------------------------------------- Layout
+$topbar-height: 64px;
+$sidebar-width: 240px;
+$rail-width: 340px;
+$drawer-width: 520px;
+$control-height: 40px;
+$control-height-sm: 32px;
+$touch-target: 44px;

@@ -1,0 +1,78 @@
+@use 'tokens' as t;
+@use 'mixins' as m;
+
+// Tables scroll inside their own container; the page never scrolls sideways.
+.dl-table-wrap {
+  overflow-x: auto;
+}
+
+.dl-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    padding: 10px t.$space-4;
+    border-top: 1px solid t.$border-subtle;
+    border-bottom: 1px solid t.$border-subtle;
+    background: t.$bg-subtle;
+    color: t.$fg-2;
+    font-size: t.$font-size-sm;
+    font-weight: t.$weight-medium;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: t.$space-3 t.$space-4;
+    border-bottom: 1px solid t.$border-subtle;
+    font-size: t.$font-size-sm;
+    vertical-align: middle;
+  }
+
+  &--dense {
+    th,
+    td {
+      padding: t.$space-2 t.$space-3;
+    }
+  }
+
+  &__num {
+    @include m.tabular;
+
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  &__strong {
+    font-weight: t.$weight-semibold;
+  }
+
+  &__stack {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__bad {
+    color: t.$error-fg-strong;
+    font-weight: t.$weight-semibold;
+  }
+
+  &__slow {
+    color: t.$warning-fg-strong;
+    font-weight: t.$weight-semibold;
+  }
+}
+
+.dl-bar {
+  display: block;
+  height: 12px;
+  border-radius: t.$radius-xs;
+  background: t.$bg-rest;
+
+  &__fill {
+    display: block;
+    height: 100%;
+    border-radius: t.$radius-xs;
+    background: t.$brand-primary;
+  }
+}

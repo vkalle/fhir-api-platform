@@ -1,0 +1,62 @@
+@use 'sass:list';
+@use 'tokens' as t;
+
+// Status is always a chip with a word, never a bare dot (design system rule).
+// <span class="dl-chip dl-chip--success">Active</span>
+$chip-tones: (
+  'success': (
+    t.$success-bg,
+    t.$success-fg,
+  ),
+  'error': (
+    t.$error-bg,
+    t.$error-fg,
+  ),
+  'warning': (
+    t.$warning-bg,
+    t.$warning-fg,
+  ),
+  'info': (
+    t.$info-bg,
+    t.$info-fg,
+  ),
+  'review': (
+    t.$purple-bg,
+    t.$purple-fg,
+  ),
+  'muted': (
+    t.$bg-rest,
+    t.$fg-2,
+  ),
+);
+
+.dl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 t.$space-3;
+  border-radius: t.$radius-pill;
+  font-size: t.$font-size-sm;
+  font-weight: t.$weight-medium;
+  white-space: nowrap;
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: t.$radius-pill;
+    background: currentcolor;
+  }
+
+  &--plain::before {
+    display: none;
+  }
+
+  @each $name, $pair in $chip-tones {
+    &--#{$name} {
+      background: list.nth($pair, 1);
+      color: list.nth($pair, 2);
+    }
+  }
+}

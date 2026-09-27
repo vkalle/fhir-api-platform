@@ -1,0 +1,152 @@
+<header class="page-head">
+  <div class="page-head__text">
+    <h1>Platform dashboard</h1>
+    <p class="u-meta">3 Orgs · 41 Accounts · 139 apps · production, last 24 hours</p>
+  </div>
+</header>
+
+<div class="dl-with-rail">
+  <div class="dl-with-rail__main">
+    <div class="dl-grid dl-grid--4">
+      <div class="dl-kpi">
+        <span class="dl-kpi__label">Requests today</span><span class="dl-kpi__value">5.82M</span
+        ><span class="dl-kpi__note dl-kpi__note--up">▲ 5% vs last week</span>
+      </div>
+      <div class="dl-kpi">
+        <span class="dl-kpi__label">Speed (p95)</span><span class="dl-kpi__value">312 ms</span
+        ><span class="dl-kpi__note">SLO 500 ms · met</span>
+      </div>
+      <div class="dl-kpi">
+        <span class="dl-kpi__label">Failed requests</span><span class="dl-kpi__value">46.1k</span
+        ><span class="dl-kpi__note dl-kpi__note--warn">0.8% · 5xx 0.03%</span>
+      </div>
+      <div class="dl-kpi">
+        <span class="dl-kpi__label">Pending with Orgs</span><span class="dl-kpi__value">5</span
+        ><span class="dl-kpi__note">View only · oldest 10 days</span>
+      </div>
+    </div>
+
+    <app-ops-trio [ops]="ops" [volumeMax]="360000" subtitle="Whole platform, per hour, last 24 hours" />
+
+    <section class="dl-card dl-card--flush">
+      <div class="dl-card__head"><h2 class="dl-card__title">By Org</h2></div>
+      <div class="dl-table-wrap">
+        <table class="dl-table dl-table--dense">
+          <thead>
+            <tr>
+              <th scope="col">Org</th>
+              <th scope="col" class="dl-table__num">Accounts</th>
+              <th scope="col" class="dl-table__num">Requests</th>
+              <th scope="col" class="dl-table__num">p95</th>
+              <th scope="col" class="dl-table__num">Failed</th>
+              <th scope="col" class="dl-table__num">Pending</th>
+              <th scope="col">Source DB</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (o of orgs; track o.name) {
+              <tr>
+                <td class="dl-table__strong">
+                  @if (o.link) {
+                    <a [routerLink]="o.link">{{ o.name }} →</a>
+                  } @else {
+                    {{ o.name }}
+                  }
+                </td>
+                <td class="dl-table__num">{{ o.accounts }}</td>
+                <td class="dl-table__num">{{ o.req }}</td>
+                <td class="dl-table__num" [class.dl-table__slow]="o.slow">{{ o.p95 }}</td>
+                <td class="dl-table__num" [class.dl-table__bad]="o.bad">{{ o.failed }}</td>
+                <td class="dl-table__num">{{ o.pending }}</td>
+                <td>
+                  <span class="dl-chip" [class]="'dl-chip--' + o.dbTone">{{ o.db }}</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="dl-card dl-card--flush">
+      <div class="dl-card__head">
+        <div class="dl-card__grow">
+          <h2 class="dl-card__title">Top failing apps</h2>
+          <p class="dl-card__subtitle">Production, last 24 hours</p>
+        </div>
+      </div>
+      <div class="dl-table-wrap">
+        <table class="dl-table dl-table--dense">
+          <thead>
+            <tr>
+              <th scope="col">App</th>
+              <th scope="col">Org › Account</th>
+              <th scope="col" class="dl-table__num">Requests</th>
+              <th scope="col" class="dl-table__num">Failed</th>
+              <th scope="col">Top error</th>
+              <th scope="col" class="dl-table__num">p95</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (f of failing; track f.app) {
+              <tr>
+                <td class="dl-table__strong">{{ f.app }}</td>
+                <td>{{ f.where }}</td>
+                <td class="dl-table__num">{{ f.req }}</td>
+                <td class="dl-table__num" [class.dl-table__bad]="f.bad">{{ f.failed }}</td>
+                <td class="u-mono">{{ f.error }}</td>
+                <td class="dl-table__num">{{ f.p95 }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <aside class="dl-with-rail__rail" aria-label="Incidents and approvals">
+    <section class="dl-rail-card">
+      <div class="rail-head">
+        <h2 class="dl-rail-card__title">Incidents</h2>
+        <span class="dl-chip dl-chip--error">1 open</span>
+      </div>
+      <div class="dl-rail-card__item">
+        <strong>WHP source DB latency</strong>
+        <span class="u-meta">p95 441 ms, 504s on Member Outreach Hub · 52 min</span>
+        <a routerLink="../sources">Open source systems →</a>
+      </div>
+      <div class="dl-rail-card__item">
+        <strong>Care Plan Export frozen</strong>
+        <span class="u-meta">UMR › Sutter Health · key exposure · since Jun 27</span>
+      </div>
+    </section>
+
+    <section class="dl-rail-card">
+      <div class="rail-head">
+        <h2 class="dl-rail-card__title">Approvals</h2>
+        <span class="dl-chip dl-chip--muted dl-chip--plain">View only</span>
+      </div>
+      <div class="dl-rail-card__item">
+        <span><strong>Raj Thakkar (UMR)</strong> approved Stellantis UM Feed update</span>
+        <span class="u-meta">Today, 08:14</span>
+      </div>
+      <div class="dl-rail-card__item">
+        <span><strong>4 requests</strong> waiting with UMR</span>
+        <span class="u-meta">Oldest: Provider Directory Lookup, 10 days</span>
+      </div>
+      <a routerLink="../approvals">All approvals →</a>
+    </section>
+
+    <section class="dl-rail-card">
+      <h2 class="dl-rail-card__title">Needs DataLink</h2>
+      <div class="dl-rail-card__item">
+        <span class="dl-chip dl-chip--review align-start">New Account</span>
+        <span>UMR requested <strong>Riverbend County</strong> · bind source DB</span>
+      </div>
+      <div class="dl-rail-card__item">
+        <span class="dl-chip dl-chip--warning align-start">Billing</span>
+        <span>2 invoices don't match metered usage</span>
+      </div>
+    </section>
+  </aside>
+</div>

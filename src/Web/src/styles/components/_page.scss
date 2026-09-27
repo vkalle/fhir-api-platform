@@ -1,0 +1,37 @@
+@use 'tokens' as t;
+
+// Page header: title + subtitle on the left, actions on the right.
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: t.$space-3;
+
+  &__text {
+    flex-grow: 1;
+  }
+}
+
+.rail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: t.$space-2;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.actions,
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: t.$space-2;
+}
+
+.align-start {
+  align-self: flex-start;
+}

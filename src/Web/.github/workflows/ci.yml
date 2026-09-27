@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Lint (TypeScript, templates incl. accessibility rules)
+        run: npm run lint:ts
+      - name: Lint (SCSS, design tokens enforced)
+        run: npm run lint:scss
+      - name: Formatting
+        run: npm run format:check
+      - name: Unit tests
+        run: npm run test:ci
+      - name: Build
+        run: npm run build
+      - name: Accessibility scan (WCAG 2 AA)
+        run: |
+          npx http-server dist/nova-portal/browser -p 4300 -P http://localhost:4300? --silent &
+          sleep 3
+          npx --yes pa11y-ci@3 --config .pa11yci.json

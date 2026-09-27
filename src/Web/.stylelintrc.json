@@ -1,0 +1,49 @@
+{
+  "extends": ["stylelint-config-standard-scss"],
+  "plugins": ["stylelint-declaration-strict-value"],
+  "rules": {
+    "scale-unlimited/declaration-strict-value": [
+      ["/color$/", "background", "background-color", "border-color", "fill", "stroke", "box-shadow", "font-family"],
+      {
+        "ignoreValues": ["transparent", "currentcolor", "inherit", "none", "0", "initial", "unset"],
+        "disableFix": true,
+        "message": "Use a design token from abstracts/_tokens.scss instead of a raw value (${property}: ${value})."
+      }
+    ],
+    "color-no-hex": true,
+    "color-named": "never",
+    "declaration-no-important": [
+      true,
+      {
+        "severity": "warning"
+      }
+    ],
+    "selector-max-id": 0,
+    "max-nesting-depth": 3,
+    "selector-class-pattern": [
+      "^[a-z][a-z0-9]*(-[a-z0-9]+)*(__[a-z0-9]+(-[a-z0-9]+)*)?(--[a-z0-9]+(-[a-z0-9]+)*)?$",
+      {
+        "message": "Use lower-case BEM class names (block__element--modifier)."
+      }
+    ],
+    "scss/at-use-no-unnamespaced": null,
+    "no-descending-specificity": null,
+    "scss/dollar-variable-empty-line-before": null
+  },
+  "overrides": [
+    {
+      "files": ["src/styles/abstracts/_tokens.scss"],
+      "rules": {
+        "color-no-hex": null,
+        "scale-unlimited/declaration-strict-value": null
+      }
+    },
+    {
+      "files": ["src/styles/base/_base.scss"],
+      "rules": {
+        "declaration-no-important": null
+      }
+    }
+  ],
+  "ignoreFiles": ["dist/**", "coverage/**", "node_modules/**"]
+}

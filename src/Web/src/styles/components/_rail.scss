@@ -1,0 +1,98 @@
+@use 'tokens' as t;
+@use 'mixins' as m;
+
+// Page body with a right rail: main column + 340px rail. Stacks on narrow screens.
+.dl-with-rail {
+  display: flex;
+  align-items: flex-start;
+  gap: t.$space-5;
+
+  &__main {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    gap: t.$space-5;
+    min-width: 0;
+  }
+
+  &__rail {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    gap: t.$space-4;
+    width: t.$rail-width;
+  }
+
+  @media (width <= 1100px) {
+    flex-direction: column;
+
+    &__rail {
+      width: 100%;
+    }
+  }
+}
+
+.dl-rail-card {
+  @include m.surface;
+
+  padding: t.$space-4 18px;
+
+  &__title {
+    @include m.type('primary-strong');
+
+    font-weight: t.$weight-bold;
+  }
+
+  &__item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: t.$space-3 0;
+    border-top: 1px solid t.$border-subtle;
+    font-size: t.$font-size-sm;
+  }
+}
+
+// Right-side drawer for short create flows (instead of a page transition).
+.dl-drawer {
+  position: fixed;
+  inset: 0 0 0 auto;
+  z-index: 61;
+  display: flex;
+  flex-direction: column;
+  width: min(t.$drawer-width, 100vw);
+  background: t.$bg-surface;
+  box-shadow: t.$shadow-popup;
+
+  &__scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: t.$scrim;
+  }
+
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: t.$space-3;
+    padding: t.$space-5 t.$space-6;
+    border-bottom: 1px solid t.$border-subtle;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    gap: t.$space-4;
+    padding: t.$space-5 t.$space-6;
+    overflow-y: auto;
+  }
+
+  &__foot {
+    display: flex;
+    align-items: center;
+    gap: t.$space-3;
+    padding: t.$space-4 t.$space-6;
+    border-top: 1px solid t.$border-subtle;
+  }
+}

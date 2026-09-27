@@ -1,0 +1,71 @@
+@use 'tokens' as t;
+
+$series: (
+  1: t.$chart-1,
+  2: t.$chart-2,
+  3: t.$chart-3,
+);
+
+:host {
+  display: block;
+}
+
+svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.lc__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-4;
+  margin-bottom: t.$space-2;
+  font-size: t.$font-size-sm;
+  color: t.$fg-2;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+.lc__swatch {
+  display: inline-block;
+  width: 12px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.lc__grid {
+  stroke: t.$border-subtle;
+}
+
+.lc__tick {
+  fill: t.$fg-2;
+  font-size: t.$font-size-sm;
+}
+
+.lc__end {
+  fill: t.$fg-1;
+  font-size: t.$font-size-sm;
+  font-weight: t.$weight-semibold;
+}
+
+.lc__line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+@each $i, $color in $series {
+  .lc__line[data-series='#{$i}'] {
+    stroke: $color;
+  }
+
+  .lc__swatch[data-series='#{$i}'] {
+    background: $color;
+  }
+}

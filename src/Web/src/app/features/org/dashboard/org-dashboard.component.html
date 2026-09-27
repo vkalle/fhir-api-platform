@@ -1,0 +1,129 @@
+<header class="page-head">
+  <div class="page-head__text">
+    <h1>Good morning, Jordan</h1>
+    <p class="u-meta">UMR · 18 Accounts · 64 apps · last 24 hours</p>
+  </div>
+  <a class="dl-btn" routerLink="../usage">Usage reports</a>
+  <a class="dl-btn dl-btn--primary" routerLink="../accounts">View all Accounts</a>
+</header>
+
+<div class="dl-with-rail">
+  <div class="dl-with-rail__main">
+    <div class="dl-grid dl-grid--4">
+      <div class="dl-kpi">
+        <span class="dl-kpi__label">Requests today</span><span class="dl-kpi__value">2.41M</span
+        ><span class="dl-kpi__note dl-kpi__note--up">▲ 6% vs last week</span>
+      </div>
+      <div class="dl-kpi">
+        <span class="dl-kpi__label">Speed (p95)</span><span class="dl-kpi__value">298 ms</span
+        ><span class="dl-kpi__note">Median 118 ms</span>
+      </div>
+      <div class="dl-kpi">
+        <span class="dl-kpi__label">Failed requests</span><span class="dl-kpi__value">16.9k</span
+        ><span class="dl-kpi__note dl-kpi__note--warn">0.7% · 5xx 0.02%</span>
+      </div>
+      <div class="dl-kpi">
+        <span class="dl-kpi__label">Awaiting your approval</span><span class="dl-kpi__value">{{ openCount() }}</span
+        ><span class="dl-kpi__note dl-kpi__note--review">Oldest 10 days</span>
+      </div>
+    </div>
+
+    <app-ops-trio [ops]="ops" subtitle="All UMR Accounts, per hour, last 24 hours" />
+
+    <section class="dl-card dl-card--flush">
+      <div class="dl-card__head">
+        <div class="dl-card__grow">
+          <h2 class="dl-card__title">Accounts</h2>
+          <p class="dl-card__subtitle">Sorted by what needs attention</p>
+        </div>
+      </div>
+      <div class="dl-table-wrap">
+        <table class="dl-table">
+          <thead>
+            <tr>
+              <th scope="col">Account</th>
+              <th scope="col" class="dl-table__num">Requests</th>
+              <th scope="col" class="dl-table__num">p95</th>
+              <th scope="col" class="dl-table__num">Failed</th>
+              <th scope="col">Needs attention</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (a of accounts; track a.name) {
+              <tr>
+                <td class="dl-table__strong">
+                  @if (a.link) {
+                    <a [routerLink]="a.link">{{ a.name }}</a>
+                  } @else {
+                    {{ a.name }}
+                  }
+                </td>
+                <td class="dl-table__num">{{ a.req }}</td>
+                <td class="dl-table__num" [class.dl-table__slow]="a.slow">{{ a.p95 }}</td>
+                <td class="dl-table__num" [class.dl-table__bad]="a.bad">{{ a.failed }}</td>
+                <td>
+                  <span class="chips">
+                    @for (i of a.issues; track i.label) {
+                      <span class="dl-chip" [class]="'dl-chip--' + i.tone">{{ i.label }}</span>
+                    }
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <aside class="dl-with-rail__rail" aria-label="Approvals and alerts">
+    <section class="dl-rail-card">
+      <div class="rail-head">
+        <h2 class="dl-rail-card__title">Awaiting your approval</h2>
+        <span class="dl-chip dl-chip--review dl-chip--plain">{{ openCount() }}</span>
+      </div>
+      @for (p of pending; track p.id) {
+        <div class="dl-rail-card__item">
+          <span class="stack">
+            <strong>{{ p.app }}</strong>
+            <span class="u-meta">{{ p.account }} · {{ p.type }} · {{ p.access }} · {{ p.waiting }}</span>
+          </span>
+          @switch (decisions()[p.id]) {
+            @case ('approved') {
+              <span class="actions">
+                <span class="dl-chip dl-chip--success">Approved</span>
+                <button class="dl-btn dl-btn--sm" type="button" (click)="decide(p.id, undefined)">Undo</button>
+              </span>
+            }
+            @case ('changes') {
+              <span class="actions">
+                <span class="dl-chip dl-chip--warning">Changes requested</span>
+                <button class="dl-btn dl-btn--sm" type="button" (click)="decide(p.id, undefined)">Undo</button>
+              </span>
+            }
+            @default {
+              <span class="actions">
+                <button class="dl-btn dl-btn--sm dl-btn--primary" type="button" (click)="decide(p.id, 'approved')">
+                  Approve
+                </button>
+                <button class="dl-btn dl-btn--sm" type="button" (click)="decide(p.id, 'changes')">
+                  Request changes
+                </button>
+              </span>
+            }
+          }
+        </div>
+      }
+    </section>
+
+    <section class="dl-rail-card">
+      <h2 class="dl-rail-card__title">Alerts</h2>
+      @for (a of alerts; track a.text) {
+        <div class="dl-rail-card__item">
+          <span class="dl-chip align-start" [class]="'dl-chip--' + a.tone">{{ a.label }}</span>
+          <span>{{ a.text }}</span>
+        </div>
+      }
+    </section>
+  </aside>
+</div>

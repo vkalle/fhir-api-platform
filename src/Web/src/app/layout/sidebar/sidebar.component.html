@@ -1,0 +1,26 @@
+<nav class="sidebar" aria-label="Primary">
+  <div class="sidebar__owner">
+    <span class="sidebar__badge" [attr.data-persona]="persona().id" aria-hidden="true">{{ persona().badge }}</span>
+    <span class="sidebar__owner-text">
+      <strong>{{ persona().name }}</strong>
+      <span>{{ persona().subtitle }}</span>
+    </span>
+  </div>
+
+  @for (section of sections(); track $index) {
+    @if (section.heading) {
+      <p class="sidebar__heading">{{ section.heading }}</p>
+    }
+    @for (item of section.items; track item.path) {
+      <a
+        class="sidebar__link"
+        [routerLink]="item.path"
+        routerLinkActive="sidebar__link--active"
+        ariaCurrentWhenActive="page"
+      >
+        <app-icon [name]="item.icon" />
+        {{ item.label }}
+      </a>
+    }
+  }
+</nav>

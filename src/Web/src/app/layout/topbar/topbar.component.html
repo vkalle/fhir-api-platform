@@ -1,0 +1,64 @@
+<header class="topbar">
+  <a class="topbar__brand" [routerLink]="persona().home">
+    <span class="topbar__mark" aria-hidden="true">D</span>
+    <span class="topbar__brand-text">
+      <strong>DataLink</strong>
+      <span>Nova Portal</span>
+    </span>
+  </a>
+
+  <nav class="topbar__context" aria-label="Context">
+    @for (c of persona().context; track c.label; let last = $last) {
+      <span>{{ c.label }}</span>
+      <strong>{{ c.value }}</strong>
+      @if (!last) {
+        <app-icon name="chevronRight" [size]="16" />
+      }
+    }
+  </nav>
+
+  <label class="topbar__search">
+    <app-icon name="search" />
+    <span class="u-sr-only">Search</span>
+    <input type="search" placeholder="Search apps, resources, users" />
+  </label>
+
+  <div class="topbar__switch">
+    <button
+      class="topbar__switch-btn"
+      type="button"
+      aria-haspopup="menu"
+      [attr.aria-expanded]="menuOpen()"
+      (click)="toggleMenu()"
+    >
+      <span class="dl-chip dl-chip--review dl-chip--plain">Demo</span>
+      <span>{{ persona().name }} · {{ persona().role }}</span>
+      <app-icon name="chevronDown" [size]="16" />
+    </button>
+
+    @if (menuOpen()) {
+      <div class="topbar__menu" role="menu">
+        <p class="topbar__menu-title">Switch persona (demo only)</p>
+        @for (p of personas; track p.id) {
+          <a
+            class="topbar__menu-item"
+            role="menuitem"
+            [class.topbar__menu-item--current]="p.id === persona().id"
+            [routerLink]="p.home"
+            (click)="closeMenu()"
+          >
+            <span class="topbar__badge" [attr.data-persona]="p.id">{{ p.badge }}</span>
+            <span class="topbar__menu-text">
+              <strong>{{ p.name }}</strong>
+              <span>{{ p.role }}</span>
+            </span>
+          </a>
+        }
+      </div>
+    }
+  </div>
+
+  <span class="topbar__avatar" role="img" [attr.aria-label]="'Signed in as ' + persona().role">{{
+    persona().initials
+  }}</span>
+</header>

@@ -1,0 +1,88 @@
+@use 'tokens' as t;
+@use 'mixins' as m;
+
+// <button class="dl-btn dl-btn--primary">
+.dl-btn {
+  @include m.transition(background-color, border-color, color);
+  @include m.focus-visible;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: t.$space-2;
+  height: t.$control-height;
+  padding: 0 t.$space-4;
+  border: 1px solid t.$border-rest;
+  border-radius: t.$radius-md;
+  background: t.$bg-surface;
+  color: t.$fg-1;
+  font-size: t.$font-size-sm;
+  font-weight: t.$weight-medium;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    border-color: t.$fg-2;
+    color: t.$fg-1;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  &--primary {
+    background: t.$brand-primary;
+    border-color: t.$brand-primary;
+    color: t.$fg-on-brand;
+
+    &:hover {
+      background: t.$brand-primary-hover;
+      border-color: t.$brand-primary-hover;
+      color: t.$fg-on-brand;
+    }
+
+    &:active {
+      background: t.$brand-primary-press;
+    }
+  }
+
+  &--ghost {
+    border-color: transparent;
+    background: transparent;
+    color: t.$fg-link;
+  }
+
+  &--danger {
+    color: t.$error-fg-strong;
+
+    &:hover {
+      border-color: t.$error-fg-strong;
+      color: t.$error-fg-strong;
+    }
+  }
+
+  &--sm {
+    height: t.$control-height-sm;
+    padding: 0 t.$space-3;
+  }
+
+  &--block {
+    width: 100%;
+  }
+}
+
+.dl-icon-btn {
+  @include m.focus-visible;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: t.$control-height;
+  height: t.$control-height;
+  border: 1px solid t.$border-rest;
+  border-radius: t.$radius-md;
+  background: t.$bg-surface;
+  color: t.$fg-2;
+  cursor: pointer;
+}
